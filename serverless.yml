@@ -1,0 +1,110 @@
+service: Quiztopia
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  profile: ${env:PROFILE}
+  region: eu-north-1
+  iam:
+    role: ${env:LAMBDA_ROLE}
+  deploymentMethod: direct
+
+useDotenv: true
+
+plugins:
+  - serverless-webpack
+
+package:
+  individually: true
+
+functions:
+  signup:
+    handler: functions/POST/signup.handler
+    events:
+      - httpApi:
+          path: /api/auth/signup
+          method: POST
+          
+
+  login:
+    handler: functions/POST/login.handler
+    events:
+      - httpApi:
+          path: /api/auth/login
+          method: POST
+
+  allquiz:
+    handler: functions/GET/allquiz.handler
+    events:
+      - httpApi:
+          path: /api/quiz/allquiz
+          method: GET
+
+
+  createQuiz:
+    handler: functions/POST/createQuiz.handler
+    events:
+      - httpApi:
+          path: /api/quiz/createQuiz
+          method: POST
+
+
+
+  addToQuiz:
+    handler: functions/POST/addToQuiz.handler
+    events:
+      - httpApi:
+          path: /api/quiz/question
+          method: POST
+
+
+  onequiz:
+    handler: functions/GET/onequiz.handler
+    events:
+      - httpApi:
+          path: /api/quiz/{userId}/{quizId}
+          method: GET
+
+  quiz:
+    handler: functions/DELETE/quiz.handler
+    events:
+      - httpApi:
+          path: /api/quiz/{quizId}
+          method: DELETE
+
+resources:
+  Resources:
+    AccountTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Accounts
+        AttributeDefinitions:
+          - AttributeName: AccountId
+            AttributeType: S
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: AccountId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        GlobalSecondaryIndexes:
+          - IndexName: Usernames
+            KeySchema:
+            - AttributeName: username
+              KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+    
+    QuizTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Quiz
+        AttributeDefinitions:
+          - AttributeName: QuizId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: QuizId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
